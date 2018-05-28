@@ -1,6 +1,7 @@
 App = {
   web3Provider: null,
   contracts: {},
+  // account: '0x0',
   account: '0xC052c27F7eB48711e815A0fb60FeA20cE6cc27E8',
 
   init: function() {
@@ -56,6 +57,8 @@ App = {
       var candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
 
+      var candidatesSelect = $("#candidatesSelect");
+      candidatesSelect.empty();
 
 
       for (var i = 1; i <= candidatesCount; i++) {
@@ -68,15 +71,34 @@ App = {
           var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
           candidatesResults.append(candidateTemplate);
 
+          //Render candidate Ballot option
+          var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
+          candidatesSelect.append(candidateOption);
 
         });
       }
-
-    loader.hide();
-    content.show();
-
+      return electionInstance.voters(App.account);
+    }).then(function(hasVoted){
+      if(hasVoted) {
+        $("form").hide();
+      }
+      loader.hide();
+      content.show();
     }).catch(function(error) {
       console.warn(error);
+    });
+  },
+
+  castVote: function() {
+    var candidateId = $('#candidatesSelect').val();
+    App.contracts.Election.deployed().then(function(instance) {
+      return instance.vote(candidateId, { from: App.account });
+    }).then(function(result) {
+      // Wait for votes to update
+      $("#content").hide();
+      $("#loader").show();
+    }).catch(function(err) {
+      console.error(err);
     });
   },
 };
